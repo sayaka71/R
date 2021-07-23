@@ -1,0 +1,69 @@
+# GLM (Logistic regression)
+df_B <- read.csv("Weibull_B_傾斜_標高.csv")
+names(df_B) <- c("name", "AR", "C", "ED", "S", "L", "P", "A", "Elev", "Ang", "Site")
+head(df_B)
+
+# Scaling
+scale.b <- scale(df_B[, c(2,3,8)])
+df_S <- data.frame(scale.b, df_B[,c(11)])
+names(df_S) <- c("AR", "C", "A", "Site")
+df_S
+
+# Scaling (Site = b + a1AR + a2C + a3A)
+df_B_Site.glm<-glm(Site~., df_S, family=binomial)
+AIC(df_B_Site.glm)
+real <- df_B$Site
+pred <- fitted(df_B_Site.glm)
+pred_round <- round(pred)
+result_Site <- data.frame(real, pred_round)
+result_Site
+summary(df_B_Site.glm)
+
+# NOT Scaling (Site = b + a1AR + a2C + a3A)
+df_B_Site.glm<-glm(Site~., df_B[,c(2,3,8,11)], family=binomial)
+AIC(df_B_Site.glm)
+real <- df_B$Site
+pred <- fitted(df_B_Site.glm)
+pred_round <- round(pred)
+result_Site <- data.frame(real, pred_round)
+result_Site
+summary(df_B_Site.glm)
+# 標準偏回帰係数（β）
+# ＝偏回帰係数（B）×独立変数の標準偏差÷従属変数の標準偏差
+
+
+
+# accuracy
+point <- 0
+for (i in 1:30){
+  if (result_Site$real[i] == result_Site$pred_round[i]){
+    point <- point + 1
+  }
+  else {
+    point <- point + 0
+  }
+}
+
+point/30
+
+# pairplot : linear fit
+library(psych)
+pairs.panels(df_B[, c(2:11)], lm = TRUE, hist.col = "green")
+
+# 線形回帰lm
+# Site
+df_B_Site.lm<-lm(Site~.,data=df_B[, c(2:8,11)])
+qqnorm(resid(df_B_Site.lm), pch="o", col="red")
+qqline(resid(df_B_Site.lm))
+# Elev
+df_B_Elev.lm<-lm(Elev~.,data=df_B[, c(2:9)])
+qqnorm(resid(df_B_Elev.lm), pch="o", col="red")
+qqline(resid(df_B_Elev.lm))
+# Ang
+df_B_Ang.lm<-lm(Ang~.,data=df_B[, c(2:8,10)])
+qqnorm(resid(df_B_Ang.lm), pch="o", col="red")
+qqline(resid(df_B_Ang.lm))
+# AIC
+AIC(df_B_Site.lm)
+AIC(df_B_Elev.lm)
+AIC(df_B_Ang.lm)
